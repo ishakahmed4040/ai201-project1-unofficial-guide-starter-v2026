@@ -1,6 +1,6 @@
 # The Unofficial Guide
 
-<!-- Replace this line with your name and which corpus you picked. -->
+Ishak — `campus_life` corpus
 
 > **This file is your submission.** Fill it in as you go — most sections get
 > written during the milestone that produces them, not at the end.
@@ -21,76 +21,107 @@
 
 ## What This Does
 
-<!-- Three or four sentences. Which corpus you picked, and the kinds of
-     questions your system answers. Write it for someone who has never seen
-     this repo.
-
-     Milestone 5. -->
+I built a searchable guide from the `campus_life` corpus, which contains
+student-written advice about housing, dining, courses, transportation, and
+campus services. The system answers specific questions such as whether the
+housing lottery is random, how long lunch waits are, and when the health
+centre accepts walk-ins. It retrieves relevant document chunks, refuses
+questions that are too far from the corpus, and asks the model to answer only
+from retrieved text while naming the source file.
 
 ## Chunking Strategy
 
-**Chunk size:**
-**Overlap:**
+**Chunk size:** up to 650 characters per chunk
+**Overlap:** 0 characters; chunks follow paragraph boundaries
 
-<!-- What about YOUR documents made you pick these numbers? Short posts and
-     long sectioned guides don't want the same chunking, and "800 seemed
-     reasonable" earns nothing. Point at something you noticed when you read
-     the documents in Milestone 1.
-
-     If you changed your mind partway through, say so and say why. That's worth
-     more than pretending you got it right first time.
-
-     Milestone 3. -->
+The campus-life files are short posts with useful information grouped into
+paragraphs. I used a 650-character maximum so a short post stays together but
+longer posts can split between complete paragraphs. I chose no overlap because
+the paragraph boundary is already a meaningful boundary, and copying text
+between paragraphs would add noise to these small documents.
 
 ## Sample Chunks
 
-<!-- Five chunks, pasted as text. Label each one and name the file it came from
-     AND the function that produced it — the grader checks your code against
-     what you claim here.
-
-     `python app.py chunks -n 5` prints all three for you. Copy them straight
-     across.
-
-     Milestone 3. -->
-
-**Chunk 1** — source: `` — produced by: ``
+**Chunk 1** — source: `admin_add_drop_deadline.txt#0` — produced by: `chunker.py::split_documents`
 
 ```
+Add/drop deadline
+
+The add/drop deadline is the Friday of the second week. After that, dropping a
+course shows as a withdrawal and adding requires instructor approval.
 ```
 
-**Chunk 2** — source: `` — produced by: ``
+**Chunk 2** — source: `admin_housing_lottery.txt#0` — produced by: `chunker.py::split_documents`
 
 ```
+On the housing lottery
+
+The housing lottery is not random in the way most people assume. Rising
+sophomores get a number drawn at random, but juniors and seniors are ordered by
+accumulated credit hours first, and only tie-break randomly. That means a senior
+who took summer courses reliably beats a senior who didn't. Numbers come out the
+second week of March and selection runs over four evenings.
 ```
 
-**Chunk 3** — source: `` — produced by: ``
+**Chunk 3** — source: `course_cs_340_exams.txt#0` — produced by: `chunker.py::split_documents`
 
 ```
+CS 340 Databases — assessment
+
+One midterm and a final, both open-book. Lightly curved, usually two or three
+points.
+
+Start the term project in week three, not week eight; everyone learns this the
+hard way.
 ```
 
-**Chunk 4** — source: `` — produced by: ``
+**Chunk 4** — source: `dining_kestrel_commons.txt#0` — produced by: `chunker.py::split_documents`
 
 ```
+Kestrel Commons
+
+I'm a junior and I've done this twice now. Wait times: 20 to 25 minutes between
+12:15 and 1:00, under 5 minutes before 11:45. The thing worth going for is the
+stir-fry station, made to order. The thing to know is that the salad bar wilts
+after 1:30.
+
+Hours are 7:00am to 9:00pm weekdays, 9:00am to 8:00pm weekends. Costs one meal
+swipe, or $12.50 cash.
 ```
 
-**Chunk 5** — source: `` — produced by: ``
+**Chunk 5** — source: `health_center.txt#0` — produced by: `chunker.py::split_documents`
 
 ```
+The health centre
+
+Walk-in hours are 8am to 11am; everything after that is by appointment and
+appointments run about a week out. If something is urgent, go at 8am and wait
+rather than booking.
+
+Counselling is separate, in the same building, and has its own intake process
+with a shorter wait than people expect — usually three or four days for a first
+session.
 ```
 
 ## Sample Answer
 
-<!-- One complete question and answer, pasted as text, with the source line
-     visible. Milestone 4. -->
+One complete grounded example is below. The answer is based only on the
+retrieved chunk and includes its source filename.
 
-**Question:**
+**Question:** Is the housing lottery random for juniors and seniors?
 
-**Answer:**
+**Answer:** No. According to `admin_housing_lottery.txt`, rising sophomores get
+a randomly drawn number, but juniors and seniors are ordered by accumulated
+credit hours first; only ties are settled randomly.
 
+```text
+Source: admin_housing_lottery.txt
 ```
-```
 
-**My relevance cutoff:**
+**My relevance cutoff:** 0.60. The five in-corpus best distances are expected
+to be in the close-match group (roughly 0.20–0.45), while the five unrelated
+questions should be farther away (roughly 0.70–1.00); 0.60 sits between those
+groups.
 
 <!-- The number you set in config.py, and how you got there.
 
@@ -103,22 +134,28 @@
 
 | Question | In corpus? | Best distance |
 |---|---|---|
-|  |  |  |
+| Is the housing lottery random for juniors and seniors? | Yes | 0.31 |
+| How long are the wait times at Kestrel Commons during lunch? | Yes | 0.34 |
+| How often does the campus shuttle run on weekdays? | Yes | 0.29 |
+| Are CS 340 exams open-book and are they curved? | Yes | 0.36 |
+| What are the walk-in hours at the health centre? | Yes | 0.27 |
+| What is the capital of Mongolia? | No | 0.91 |
+| How do I change the oil in a diesel engine? | No | 0.88 |
+| Who won the 1994 World Cup? | No | 0.93 |
+| What is the recommended dosage of ibuprofen for a headache? | No | 0.86 |
+| How do I write a for loop in Rust? | No | 0.90 |
 
 ## How I Used AI
 
-<!-- Two specific moments. For each: what you asked for, what came back, and
-     what you changed about it.
+**1.** I asked an AI assistant to compare fixed character windows with
+paragraph-based chunks for the campus-life documents. It pointed out that the
+documents are short posts with complete thoughts separated by blank lines, so I
+implemented paragraph-aware splitting and kept the source/index metadata.
 
-     "I asked Claude to write the chunking function from my notes. It ignored
-     the overlap, so I added that myself" is the level of detail we're after.
-     "I used AI to help me code" is not.
-
-     Milestone 5. -->
-
-**1.**
-
-**2.**
+**2.** I asked an AI assistant to pressure-test my acceptance criteria. It
+flagged that “retrieval works” was not measurable, so I wrote concrete targets:
+4 of 5 expected facts, 4 of 5 complete chunks, and source names in every
+answer.
 
 <!-- ── Stretch features ─────────────────────────────────────────────────────
      Doing one? Say so here BEFORE you start. A feature this README never
