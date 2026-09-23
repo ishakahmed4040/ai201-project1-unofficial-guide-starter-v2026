@@ -23,8 +23,8 @@ For at least 4 of my 5 test questions, the retrieved chunks include one that
 contains the answer.
 
 **Why this target:**
-<!-- e.g. "One of my questions is about a topic only two documents mention, so
-     I expect that one to be hard." -->
+The corpus covers several different campus topics, but one question may still
+be harder because its answer is short or uses different wording.
 
 ---
 
@@ -33,8 +33,8 @@ contains the answer.
 Every answer the system produces names at least one source document.
 
 **Why this target:**
-<!-- Why all five and not four? What about your setup makes that achievable —
-     or what would have to go wrong for it not to be? -->
+Source filenames are stored with every chunk and the prompt explicitly asks
+for citations, so all five answers should be able to name a source.
 
 ---
 
@@ -50,13 +50,14 @@ in at least 4 of 5 tries.
      just keep five of them, or the "4 of 5" above has nothing to be 4 of. -->
 
 **Why this target:**
-<!-- What did your distances look like when you set the cutoff in Milestone 4?
-     Was there a clean gap, or did the two groups overlap? -->
+Four of five allows for one accidental close match while still requiring the
+gate to protect against unsupported answers in normal use.
 
 ---
 
 ## 4. Something about your chunks
-
+At least 4 of 5 sampled chunks must read as a complete, self-contained campus
+tip and must not end in the middle of a sentence.
 <!-- YOU WRITE THIS ONE.
 
      How would you know if your chunks were the right size? Name something
@@ -73,12 +74,15 @@ in at least 4 of 5 tries.
 
 **Why this target:**
 
+The campus-life documents are short posts organized into paragraphs, so
+paragraph-aware chunks should preserve complete thoughts most of the time.
 
 
 ---
 
 ## 5. Your choice
-
+For at least 4 of 5 in-corpus questions, the answer must mention the expected
+fact recorded in `questions.py` (case-insensitive).
 <!-- YOU WRITE THIS ONE TOO.
 
      Pick something you actually care about getting right. It could be about
@@ -91,6 +95,8 @@ in at least 4 of 5 tries.
 
 **Why this target:**
 
+This checks useful correctness rather than merely producing fluent text, while
+allowing one miss from retrieval or generation.
 
 
 ---
