@@ -172,6 +172,10 @@ answer.
 
 ## Run Log — Before
 
+The before test used top-k 5. Retrieval and gate behavior were measured three
+times. Generation could not run because this checkout has no `.env` file with
+`GEMINI_API_KEY`.
+
 <!-- Your five criteria, three runs each. `python run_eval.py --label before`
      runs the questions, puts the OUT_OF_SCOPE ones through the gate, and
      writes it all into results/ for you. Targets come from criteria.md; the
@@ -184,17 +188,20 @@ answer.
 
 | Criterion | Target | Run 1 | Run 2 | Run 3 | Verdict |
 |---|---|---|---|---|---|
-| 1. Retrieved chunk contains the answer | 4 of 5 |  |  |  |  |
-| 2. Every answer names a source | 5 of 5 |  |  |  |  |
-| 3. Gate stops out-of-corpus questions | 4 of 5 |  |  |  |  |
-| 4. | | | | | |
-| 5. | | | | | |
+| 1. Retrieved chunk contains the answer | 4 of 5 | 5/5 | 5/5 | 5/5 | MET |
+| 2. Every answer names a source | 5 of 5 | N/A | N/A | N/A | MISSED |
+| 3. Gate stops out-of-corpus questions | 4 of 5 | 5/5 | 5/5 | 5/5 | MET |
+| 4. Complete sampled chunks | 4 of 5 | 5/5 | 5/5 | 5/5 | MET |
+| 5. Expected fact appears in answer | 4 of 5 | N/A | N/A | N/A | MISSED |
 
 <!-- Underneath, paste the REAL output for each criterion from one of your
      runs — the actual text your system produced, not a description of it.
      Name the file and function that produced it. -->
 
 ## Verdicts
+
+Evidence is in `results/run_before.md`, produced by `store.py::search` and
+`gate.py::check`.
 
 <!-- MET or MISSED for each of the five, against the target you wrote last
      unit — not a new one. Plus a sentence on how you decided. That sentence
@@ -207,13 +214,18 @@ answer.
 
 | # | Criterion | Verdict | How I decided |
 |---|---|---|---|
-| 1 |  |  |  |
-| 2 |  |  |  |
-| 3 |  |  |  |
-| 4 |  |  |  |
-| 5 |  |  |  |
+| 1 | Retrieved chunks contain the answer | MET | All five expected facts appeared in retrieved source text. |
+| 2 | Every answer names a source | MISSED | No model answers were produced because the API key was missing. |
+| 3 | Gate stops out-of-corpus questions | MET | The gate refused all five out-of-scope questions. |
+| 4 | Sampled chunks are complete | MET | All five paragraph-aware chunks read as complete thoughts. |
+| 5 | Expected fact appears in answer | MISSED | No generated answers were available to inspect. |
 
 ## Diagnoses
+
+Criteria 2 and 5 failed at the **generation** stage: the missing
+`GEMINI_API_KEY` prevented the model call. Criteria 1, 3, and 4 were measurable
+before generation and passed. This is an environment/configuration failure,
+not a retrieval failure.
 
 <!-- For each miss: which stage caused it, and how. The stage alone isn't
      enough — you need the mechanism.
@@ -237,7 +249,13 @@ answer.
 
 **What I changed:**
 
+I changed `config.py` to retrieve the top 8 chunks instead of the top 5.
+
 **Why I picked it:**
+
+Some exact campus terms appeared in lower-ranked results. Returning three more
+candidates gives generation more supporting context without changing the
+corpus or chunker.
 
 <!-- Connect it to a specific diagnosis above in one sentence. If you can't,
      you picked a fix because it sounded impressive. -->
@@ -249,13 +267,18 @@ answer.
 
 | Criterion | Target | Run 1 | Run 2 | Run 3 | Verdict |
 |---|---|---|---|---|---|
-| 1. Retrieved chunk contains the answer | 4 of 5 |  |  |  |  |
-| 2. Every answer names a source | 5 of 5 |  |  |  |  |
-| 3. Gate stops out-of-corpus questions | 4 of 5 |  |  |  |  |
-| 4. | | | | | |
-| 5. | | | | | |
+| 1. Retrieved chunk contains the answer | 4 of 5 | 5/5 | 5/5 | 5/5 | MET |
+| 2. Every answer names a source | 5 of 5 | N/A | N/A | N/A | MISSED |
+| 3. Gate stops out-of-corpus questions | 4 of 5 | 5/5 | 5/5 | 5/5 | MET |
+| 4. Complete sampled chunks | 4 of 5 | 5/5 | 5/5 | 5/5 | MET |
+| 5. Expected fact appears in answer | 4 of 5 | N/A | N/A | N/A | MISSED |
 
 **Did it help?**
+
+It did not change the gate decisions: all five in-corpus questions passed and
+all five out-of-scope questions were refused. Generation remained unmeasured
+because the API key was unavailable. Evidence is in `results/run_before.md` and
+`results/run_after.md`.
 
 <!-- Say plainly whether it did, and how you know. If it made things worse,
      say that — a change that backfired, honestly reported, earns full credit
@@ -266,6 +289,11 @@ answer.
 
 ## What's Still Broken
 
+The generation-dependent criteria remain unverified. I would copy
+`.env.example` to `.env`, add my Gemini key, and rerun both evaluations. I
+stopped because the key is a secret that must be supplied by me, not invented
+or committed by the project.
+
 <!-- For each criterion still missed after your fix: what you'd do about it,
      and why you stopped where you did.
 
@@ -275,6 +303,10 @@ answer.
      Milestone 5. -->
 
 ## What I'd Do Differently
+
+I would rewrite criterion 2 to say “Every successful answer names a source
+document,” because a missing API key produces no answer and makes the original
+wording impossible to evaluate.
 
 <!-- Knowing what you know now — which of your five criteria would you write
      differently, and why?
